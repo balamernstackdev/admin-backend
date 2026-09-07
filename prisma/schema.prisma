@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum TaskStatus {
+  DRAFT
+  PUBLISHED
+  PAUSED
+  EXPIRED
+  ARCHIVED
+}
+
+model Admin {
+  id               String       @id @default(uuid())
+  email            String       @unique
+  passwordHash     String       @map("password_hash")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+  lastLoginAt      DateTime?    @map("last_login_at")
+
+  createdTasks     Task[]       @relation("CreatedTasks")
+  auditLogs        AuditLog[]
+
+  @@map("admins")
+}
+
+model Task {
+  id               String       @id @default(uuid())
+  title            String
+  slug             String       @unique
+  description      String      
+  instructions     String      
+  thumbnailUrl     String?      @map("thumbnail_url")
+  completionCount  Int          @default(0) @map("completion_count")
+  status           TaskStatus   @default(DRAFT)
+  startAt          DateTime?    @map("start_at")
+  endAt            DateTime?    @map("end_at")
+  createdBy        String       @map("created_by")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  creator          Admin        @relation("CreatedTasks", fields: [createdBy], references: [id])
+  links            TaskLink[]
+  completionEvents TaskCompletionEvent[]
+
+  @@index([status])
+  @@index([createdBy])
+  @@index([startAt])
+  @@index([endAt])
+  @@map("tasks")
+}
+
+model TaskLink {
+  id             String       @id @default(uuid())
+  taskId         String       @map("task_id")
+  platform       String
+  url            String      
+  label          String
+  description    String?     
+  sortOrder      Int          @default(0) @map("sort_order")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  task           Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actions        TaskAction[]
+
+  @@index([taskId])
+  @@map("task_links")
+}
+
+model TaskAction {
+  id             String       @id @default(uuid())
+  taskLinkId     String       @map("task_link_id")
+  actionType     String       @map("action_type")
+  isRequired     Boolean      @default(true) @map("is_required")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  link           TaskLink     @relation(fields: [taskLinkId], references: [id], onDelete: Cascade)
+
+  @@index([taskLinkId])
+  @@map("task_actions")
+}
+
+model TaskCompletionEvent {
+  id                 String       @id @default(uuid())
+  taskId             String       @map("task_id")
+  anonymousSessionId String       @map("anonymous_session_id")
+  ipHash             String?      @map("ip_hash")
+  userAgentHash      String?      @map("user_agent_hash")
+  createdAt          DateTime     @default(now()) @map("created_at")
+
+  task               Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, anonymousSessionId])
+  @@index([taskId])
+  @@index([createdAt])
+  @@map("task_completion_events")
+}
+
+model AuditLog {
+  id             String       @id @default(uuid())
+  adminId        String?      @map("admin_id")
+  action         String
+  entityType     String       @map("entity_type")
+  entityId       String       @map("entity_id")
+  metadata       Json?
+  ipAddress      String?      @map("ip_address")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  admin          Admin?       @relation(fields: [adminId], references: [id])
+
+  @@index([adminId])
+  @@index([action])
+  @@map("audit_logs")
+}
+
