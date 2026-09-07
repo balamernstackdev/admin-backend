@@ -28,9 +28,31 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(morgan('dev'));
 
-// Health Check
-app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({ success: true, message: 'Server is healthy', timestamp: new Date().toISOString() });
+import prisma from './utils/prisma';
+
+// Health Checks & Root
+app.get('/', (req: Request, res: Response) => {
+  res.status(200).json({ success: true, message: 'TaskHub API is running smoothly 🚀', timestamp: new Date().toISOString() });
+});
+
+app.get(['/health', '/api/health'], async (req: Request, res: Response) => {
+  try {
+    // Ping the database to verify connection
+    await prisma.$queryRaw`SELECT 1`;
+    res.status(200).json({ 
+      success: true, 
+      status: 'UP', 
+      database: 'CONNECTED',
+      timestamp: new Date().toISOString() 
+    });
+  } catch (error) {
+    res.status(503).json({ 
+      success: false, 
+      status: 'DOWN', 
+      database: 'DISCONNECTED', 
+      timestamp: new Date().toISOString() 
+    });
+  }
 });
 
 // Routes

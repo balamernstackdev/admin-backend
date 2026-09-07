@@ -11,9 +11,9 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
   if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({ success: false, message: 'No token provided' });
   }
-  const token = authHeader.split(' ')[1];
+  const token = authHeader.split(' ')[1] as string;
   try {
-    const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET!) as { id: string; role: string };
+    const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET || '') as any;
     const admin = await prisma.admin.findUnique({ where: { id: payload.id }, select: { id: true } });
     if (!admin) {
       return res.status(401).json({ success: false, message: 'Admin not found' });

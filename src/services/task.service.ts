@@ -148,3 +148,38 @@ export const updateTask = async (id: string, data: any) => {
 export const deleteTask = async (id: string) => {
   await prisma.task.delete({ where: { id } });
 };
+
+export const addTaskLink = async (taskId: string, linkData: any) => {
+  const data: any = {
+    taskId,
+    platform: linkData.platform,
+    url: linkData.url,
+    label: linkData.label,
+    description: linkData.description,
+    sortOrder: linkData.sortOrder || 0,
+  };
+  if (linkData.actions) data.actions = { create: linkData.actions };
+
+  return prisma.taskLink.create({
+    data,
+    include: { actions: true },
+  });
+};
+
+export const updateTaskLink = async (linkId: string, linkData: any) => {
+  return prisma.taskLink.update({
+    where: { id: linkId },
+    data: {
+      platform: linkData.platform,
+      url: linkData.url,
+      label: linkData.label,
+      description: linkData.description,
+      sortOrder: linkData.sortOrder,
+    },
+    include: { actions: true },
+  });
+};
+
+export const deleteTaskLink = async (linkId: string) => {
+  await prisma.taskLink.delete({ where: { id: linkId } });
+};
