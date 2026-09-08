@@ -3,11 +3,17 @@ import jwt from 'jsonwebtoken';
 import prisma from '../utils/prisma';
 
 const SALT_ROUNDS = 10;
-const ACCESS_EXPIRY = '15m';
+const ACCESS_EXPIRY = '1d';
 const REFRESH_EXPIRY = '7d';
 
 export const hashPassword = (pw: string) => bcrypt.hash(pw, SALT_ROUNDS);
 export const comparePassword = (pw: string, hash: string) => bcrypt.compare(pw, hash);
+
+export const getMe = async (adminId: string) => {
+  const admin = await prisma.admin.findUnique({ where: { id: adminId } });
+  if (!admin) throw Object.assign(new Error('User not found'), { status: 404 });
+  return { id: admin.id, email: admin.email, role: 'ADMIN' };
+};
 
 export const generateTokens = (adminId: string) => {
   const accessToken = jwt.sign(

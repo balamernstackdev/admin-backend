@@ -9,3 +9,12 @@ export const login = async (req: Request, res: Response) => {
     return res.status(err.status || 500).json({ success: false, message: err.message });
   }
 };
+
+export const me = async (req: any, res: Response) => {
+  try {
+    const admin = await authService.getMe(req.user.id);
+    return res.status(200).json({ success: true, data: admin });
+  } catch (err: any) {
+    return res.status(err.status || 500).json({ success: false, message: err.message });
+  }
+};
