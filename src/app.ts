@@ -15,8 +15,21 @@ const app: Express = express();
 
 // Security Middlewares
 app.use(helmet());
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'https://admin-frontend-bay-rho.vercel.app',
+  'https://midnightblue-rabbit-997721.hostingersite.com',
+  ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : []),
+];
+
 app.use(cors({
-  origin: (process.env.CORS_ORIGIN || 'http://localhost:5173,https://admin-frontend-bay-rho.vercel.app').split(','),
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin.trim())) return callback(null, true);
+    return callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true,
 }));
 
