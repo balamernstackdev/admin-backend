@@ -17,7 +17,7 @@ const app = (0, express_1.default)();
 // Security Middlewares
 app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({
-    origin: (process.env.CORS_ORIGIN || 'http://localhost:5173').split(','),
+    origin: (process.env.CORS_ORIGIN || 'http://localhost:5173,https://admin-frontend-bay-rho.vercel.app').split(','),
     credentials: true,
 }));
 // Rate Limiting
@@ -26,9 +26,30 @@ const authLimiter = (0, express_rate_limit_1.default)({ windowMs: 15 * 60 * 1000
 app.use(limiter);
 app.use(express_1.default.json({ limit: '10mb' }));
 app.use((0, morgan_1.default)('dev'));
-// Health Check
-app.get('/health', (req, res) => {
-    res.status(200).json({ success: true, message: 'Server is healthy', timestamp: new Date().toISOString() });
+const prisma_1 = __importDefault(require("./utils/prisma"));
+// Health Checks & Root
+app.get('/', (req, res) => {
+    res.status(200).json({ success: true, message: 'TaskHub API is running smoothly 🚀', timestamp: new Date().toISOString() });
+});
+app.get(['/health', '/api/health'], async (req, res) => {
+    try {
+        // Ping the database to verify connection
+        await prisma_1.default.$queryRaw `SELECT 1`;
+        res.status(200).json({
+            success: true,
+            status: 'UP',
+            database: 'CONNECTED',
+            timestamp: new Date().toISOString()
+        });
+    }
+    catch (error) {
+        res.status(503).json({
+            success: false,
+            status: 'DOWN',
+            database: 'DISCONNECTED',
+            timestamp: new Date().toISOString()
+        });
+    }
 });
 // Routes
 app.use('/api/auth', authLimiter, auth_routes_1.default);

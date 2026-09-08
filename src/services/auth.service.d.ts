@@ -1,5 +1,10 @@
 export declare const hashPassword: (pw: string) => Promise<string>;
 export declare const comparePassword: (pw: string, hash: string) => Promise<boolean>;
+export declare const getMe: (adminId: string) => Promise<{
+    id: string;
+    email: string;
+    role: string;
+}>;
 export declare const generateTokens: (adminId: string) => {
     accessToken: string;
     refreshToken: string;

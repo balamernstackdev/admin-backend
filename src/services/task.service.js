@@ -127,6 +127,22 @@ const updateTask = async (id, data) => {
             ...taskData,
             startAt: taskData.startAt ? new Date(taskData.startAt) : undefined,
             endAt: taskData.endAt ? new Date(taskData.endAt) : undefined,
+            links: links ? {
+                deleteMany: {},
+                create: links.map((link) => ({
+                    platform: link.platform,
+                    url: link.url,
+                    label: link.label,
+                    description: link.description,
+                    sortOrder: link.sortOrder || 0,
+                    actions: link.actions ? {
+                        create: link.actions.map((action) => ({
+                            actionType: action.actionType,
+                            isRequired: action.isRequired !== undefined ? action.isRequired : true,
+                        }))
+                    } : undefined,
+                })),
+            } : undefined,
         },
         include: { links: { include: { actions: true } } },
     });

@@ -16,7 +16,7 @@ const app: Express = express();
 // Security Middlewares
 app.use(helmet());
 app.use(cors({
-  origin: (process.env.CORS_ORIGIN || 'http://localhost:5173').split(','),
+  origin: (process.env.CORS_ORIGIN || 'http://localhost:5173,https://admin-frontend-bay-rho.vercel.app').split(','),
   credentials: true,
 }));
 
